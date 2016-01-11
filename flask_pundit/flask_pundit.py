@@ -1,6 +1,9 @@
 import flask
 
 def authorize(record, action=None, user=None):
+    """ Call this method from within a resource or
+    a route to authorize a model instance
+    """
     current_user = user or _get_current_user()
     action = action or _get_action_from_request()
     policy_clazz = _get_policy_clazz(record)
