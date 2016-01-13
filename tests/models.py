@@ -1,12 +1,8 @@
-from policies import UserPolicy, PostPolicy
-
 class User:
-    policy_class = UserPolicy
     def __init__(self):
         pass
 
 class Post:
-    policy_class = PostPolicy
-    def __init__(self):
-        pass
+    def __init__(self, id):
+        self.id = id
 

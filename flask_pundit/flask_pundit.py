@@ -1,65 +1,109 @@
+import constants
 import flask
+from functools import wraps
+import importlib
 
 
-def authorize(record, action=None, user=None):
-    """ Call this method from within a resource or
-    a route to authorize a model instance
-    """
-    current_user = user or _get_current_user()
-    action = action or _get_action_from_request()
-    policy_clazz = _get_policy_clazz(record)
-    action_response = _delegate_action(policy_clazz, current_user, record, action)
+def verify_authorized(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        pundit = flask.current_app.get('extensions').get('flask_pundit')
+        stack_top = pundit._get_stack_top()
+        stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', []).\
+            append(pundit._verify_authorized)
+        return func(*args, **kwargs)
+    return inner
 
-    if policy_clazz is not None:
-        flask._app_ctx_stack.top[AUTHORIZE_CALLED] = True
+
+class FlaskPundit(object):
+    def __init__(self, app=None, policies_path='policies'):
+        self.app = app
+        self.policies_path = policies_path
+        if app is not None:
+            self.init_app(app, policies_path)
+
+    def init_app(self, app):
+        if not hasattr(app, 'extensions'):
+            app.extensions = {}
+        app.extensions['flask_pundit'] = self
+
+    def _get_app(self):
+        if self.app:
+            return self.app
+        if flask.current_app:
+            return flask.current_app
+        raise RuntimeError('''
+            Need to initialize extension with an app or have app context''')
+
+    def authorize(self, record, action=None, user=None):
+        """ Call this method from within a resource or
+        a route to authorize a model instance
+        """
+        if record is None:
+            raise RuntimeError('Need to pass a record object')
+
+        current_user = user or self._get_current_user()
+        action = action or self._get_action_from_request()
+        policy_clazz = self._get_policy_clazz(record)
+
+        self._get_stack_top().authorize_called = True
         return getattr(policy_clazz(current_user, record), action)()
-    raise RuntimeError('Required policy class for type %s' % record)
 
-def policy_scope(record, user=None):
-    """ Call this method from within a resource or
-    a route to return a 'scoped' version of a model.
-    For example, blog posts only viewable by the admin's staff.
-    """
-    current_user = user or _get_current_user()
-    action = 'resolve'
-    scope_clazz = _get_scope_clazz(record)
+    def policy_scope(self, record, user=None):
+        """ Call this method from within a resource or
+        For example, blog posts only viewable by the admin's staff.
+        """
+        if record is None:
+            raise RuntimeError('Need to pass a record object')
 
-    if scope_clazz is not None:
-        flask._app_ctx_stack.top[POLICY_SCOPE_CALLED] = True
+        current_user = user or self._get_current_user()
+        action = constants.SCOPE_ACTION
+        scope_clazz = self._get_scope_clazz(record)
+
+        self._get_stack_top().policy_scope_called = True
         return getattr(scope_clazz(current_user, record), action)()
-    raise RuntimeError('Required policy class for type %s' % record)
+        raise RuntimeError('Required policy class for type %s' % record)
 
-def verify_authorized():
-    return flask._app_ctx_stack.top.pop(AUTHORIZE_CALLED, False)
+    def _verify_authorized(self):
+        stack_top = self._get_stack_top()
+        if getattr(stack_top, 'authorize_called'):
+            stack_top.authorize_called = False
+            return True
+        return False
 
+    def _verify_policy_scoped(self):
+        stack_top = self._get_stack_top()
+        if getattr(stack_top, 'policy_scope_called'):
+            stack_top.policy_scope_called = False
+            return True
+        return False
 
-def verify_policy_scoped():
-    return flask._app_ctx_stack.top.pop(POLICY_SCOPE_CALLED, False)
+    def _process_after_request_hooks(self):
+        stack_top = self._get_stack_top()
+        callbacks = getattr(stack_top, 'pundit_callbacks')
+        if callbacks is not None:
+            while len(callbacks) > 0:
+                call = callbacks.pop()
+                if call() == False:
+                    raise ForbiddenError('Failed to call authorize method')
 
+    def _get_current_user(self):
+        return flask.g.get('user') or flask.g.get('current_user')
 
-def _delegate_action(clazz, user, record, action):
-    """ Delegates the action to an instance of the class
-    that is passed in. This is either a policy class or
-    the inner Scope class
-    """
-    if clazz is not None:
-        return getattr(clazz(user, record), action)()
-    raise RuntimeError('Required policy class for type %s' % record)
+    def _get_policy_clazz(self, record):
+        record_clazz_name = getattr(getattr(record, '__class__'), '__name__')
+        policy_clazz_path = '.'.join([self.policies_path, record_clazz_name + 'Policy'])
+        policy_clazz = importlib.import_module(policy_clazz_path)
+        return policy_clazz
 
+    def _get_scope_clazz(self, record):
+        policy_clazz = self._get_policy_clazz(record)
+        return getattr(policy_clazz, 'Scope') if policy_clazz else None
 
-def _get_current_user():
-    return flask.g.get('user') or flask.g.get('current_user')
+    def _get_action_from_request(self):
+        return flask.request.method.lower()
 
-
-def _get_policy_clazz(record):
-    record_clazz = getattr(record, '__class__')
-    return getattr(record_clazz, 'policy_class') if record_clazz else None
-
-
-def _get_scope_clazz(record):
-    policy_clazz = _get_policy_clazz(record)
-    return getattr(policy_clazz, 'Scope') if policy_clazz else None
-
-
-def _get_action_from_request():
-    return flask.request.method.lower()
+    def _get_stack_top(self):
+        if flask._app_ctx_stack.top is not None:
+            return flask._app_ctx_stack.top
+        raise RuntimeError('No application context present')
