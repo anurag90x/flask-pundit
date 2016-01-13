@@ -1,5 +1,5 @@
 from flask import g, Flask
-from flask_pundit.flask_pundit import FlaskPundit
+from flask_pundit import FlaskPundit
 from models import User, Post
 from policies import PostPolicy
 from nose.tools import *

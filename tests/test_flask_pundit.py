@@ -1,4 +1,4 @@
-from flask_pundit.flask_pundit import FlaskPundit
+from flask_pundit import FlaskPundit
 from mock import Mock, patch
 from nose.tools import ok_, eq_, assert_raises
 from unittest import TestCase
@@ -8,8 +8,8 @@ class TestFlaskPundit(TestCase):
         self.pundit = FlaskPundit()
 
 
-    @patch('flask_pundit.flask_pundit.importlib')
-    @patch('flask_pundit.flask_pundit.flask')
+    @patch('flask_pundit.importlib')
+    @patch('flask_pundit.flask')
     def test_authorize_with_record(self, flask, importlib):
         flask.configure_mock(**({ 'g':{'user': 'admin'}, 'request.method':'GET'}))
         policy_class_instance = Mock(get = lambda : True)
@@ -20,8 +20,8 @@ class TestFlaskPundit(TestCase):
         record = Mock(__class__ = record_class)
         ok_(self.pundit.authorize(record))
 
-    @patch('flask_pundit.flask_pundit.importlib')
-    @patch('flask_pundit.flask_pundit.flask')
+    @patch('flask_pundit.importlib')
+    @patch('flask_pundit.flask')
     def test_authorize_with_record_and_action(self, flask, importlib):
         flask.configure_mock(**({ 'g':{'user': 'admin'}, 'request.method':'GET'}))
         policy_class_instance = Mock(index = lambda : False)
@@ -32,8 +32,8 @@ class TestFlaskPundit(TestCase):
         record = Mock(__class__ = record_class)
         ok_(self.pundit.authorize(record))
 
-    @patch('flask_pundit.flask_pundit.importlib')
-    @patch('flask_pundit.flask_pundit.flask')
+    @patch('flask_pundit.importlib')
+    @patch('flask_pundit.flask')
     def test_authorize_with_record_and_action_and_user(self, flask, importlib):
         flask.configure_mock(**({ 'g':{'user': 'admin'}, 'request.method':'GET'}))
         policy_class_instance = Mock(get = lambda : True)
@@ -46,15 +46,15 @@ class TestFlaskPundit(TestCase):
         ok_(self.pundit.authorize(record, user=user))
         ok_(policy_class_instance.called_once_with(record, user))
 
-    @patch('flask_pundit.flask_pundit.flask')
+    @patch('flask_pundit.flask')
     def test_authorize_throws_error_for_missing_policy(self, flask):
         flask.configure_mock(**({ 'g':{'user': 'admin'}}))
         record_class = Mock(__name__ = 'Record')
         record = Mock(__class__ = record_class)
         assert_raises(ImportError, self.pundit.authorize, record)
 
-    @patch('flask_pundit.flask_pundit.importlib')
-    @patch('flask_pundit.flask_pundit.flask')
+    @patch('flask_pundit.importlib')
+    @patch('flask_pundit.flask')
     def test_authorize_throws_error_for_missing_action(self, flask, importlib):
         flask.configure_mock(**({ 'g':{'user': 'admin'}}))
         policy_class_instance = Mock(spec=['index'])
@@ -65,8 +65,8 @@ class TestFlaskPundit(TestCase):
         record = Mock(__class__ = record_class)
         assert_raises(AttributeError, self.pundit.authorize, record, 'update')
 
-    @patch('flask_pundit.flask_pundit.importlib')
-    @patch('flask_pundit.flask_pundit.flask')
+    @patch('flask_pundit.importlib')
+    @patch('flask_pundit.flask')
     def test_policy_scope_triggers_resolve_action(self, flask, importlib):
         flask.configure_mock(**({ 'g':{'user': 'admin'}}))
         scope_class_instance = Mock(resolve = lambda : [1,2,3])
