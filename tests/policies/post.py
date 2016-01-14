@@ -1,13 +1,9 @@
 from flask_pundit.application_policy import ApplicationPolicy
-import models
-
-class UserPolicy(ApplicationPolicy):
-    def __init__(self):
-        pass
+from tests.models.post import Post
 
 class PostPolicy(ApplicationPolicy):
     def get(self):
-        return False
+        return True
 
     def index(self):
         return True

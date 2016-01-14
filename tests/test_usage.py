@@ -1,7 +1,7 @@
 from flask import g, Flask
 from flask_pundit import FlaskPundit
-from models import User, Post
-from policies import PostPolicy
+from models.user import User
+from models.post import Post
 from nose.tools import *
 from mock import Mock, patch
 

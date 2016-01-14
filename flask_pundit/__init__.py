@@ -1,8 +1,12 @@
 import constants
 import flask
-import importlib
 
 from functools import wraps
+
+try:
+    from importlib import import_module
+except:
+    from import_helpers import import_module
 
 
 def verify_authorized(func):
@@ -61,6 +65,13 @@ class FlaskPundit(object):
         action = constants.SCOPE_ACTION
         scope_clazz = self._get_scope_clazz(record)
 
+        if scope_clazz is None:
+            raise RuntimeError('''
+                Policy class is missing inner Scope class. Either
+                inherit from ApplicationPolicy or create your own
+                inner Scope class/ base policy class with an inner
+                scope class definition ''')
+
         self._get_stack_top().policy_scope_called = True
         return getattr(scope_clazz(current_user, record), action)()
 
@@ -84,7 +95,7 @@ class FlaskPundit(object):
         if callbacks is not None:
             while len(callbacks) > 0:
                 call = callbacks.pop()
-                if call() == False:
+                if call() is False:
                     raise ForbiddenError('Failed to call authorize method')
 
     def _get_current_user(self):
@@ -92,13 +103,18 @@ class FlaskPundit(object):
 
     def _get_policy_clazz(self, record):
         record_clazz_name = getattr(getattr(record, '__class__'), '__name__')
-        policy_clazz_path = '.'.join([self.policies_path, record_clazz_name + 'Policy'])
-        policy_clazz = importlib.import_module(policy_clazz_path)
+        policy_clazz = getattr(self._get_policy_module(record_clazz_name),
+                               record_clazz_name + 'Policy')
         return policy_clazz
 
     def _get_scope_clazz(self, record):
         policy_clazz = self._get_policy_clazz(record)
-        return getattr(policy_clazz, 'Scope') if policy_clazz else None
+        return getattr(policy_clazz, 'Scope')
+
+    def _get_policy_module(self, record_clazz_name):
+        policy_clazz_path = '.'.join([self.policies_path, record_clazz_name.lower()])
+        policy_clazz_module = import_module(policy_clazz_path)
+        return policy_clazz_module
 
     def _get_action_from_request(self):
         return flask.request.method.lower()
