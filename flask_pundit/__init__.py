@@ -3,11 +3,6 @@ import flask
 
 from functools import wraps
 
-try:
-    from importlib import import_module
-except:
-    from import_helpers import import_module
-
 
 def verify_authorized(func):
     @wraps(func)
@@ -112,8 +107,11 @@ class FlaskPundit(object):
         return getattr(policy_clazz, 'Scope')
 
     def _get_policy_module(self, record_clazz_name):
-        policy_clazz_path = '.'.join([self.policies_path, record_clazz_name.lower()])
-        policy_clazz_module = import_module(policy_clazz_path)
+        policy_clazz_path = '.'.join([self.policies_path,
+                                      record_clazz_name.lower()])
+        policy_clazz_module = __import__(policy_clazz_path,
+                                         fromlist=[record_clazz_name + 'Policy'],
+                                         )
         return policy_clazz_module
 
     def _get_action_from_request(self):
