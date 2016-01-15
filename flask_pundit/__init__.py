@@ -87,17 +87,11 @@ class FlaskPundit(object):
 
     def _verify_authorized(self):
         stack_top = self._get_stack_top()
-        if getattr(stack_top, 'authorize_called', None):
-            stack_top.authorize_called = False
-            return True
-        return False
+        return getattr(stack_top, 'authorize_called', False)
 
     def _verify_policy_scoped(self):
         stack_top = self._get_stack_top()
-        if getattr(stack_top, 'policy_scope_called', None):
-            stack_top.policy_scope_called = False
-            return True
-        return False
+        return getattr(stack_top, 'policy_scope_called', False)
 
     def _get_current_user(self):
         return flask.g.get('user') or flask.g.get('current_user')

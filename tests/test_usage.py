@@ -75,5 +75,4 @@ class TestUsage(TestCase):
         def admin_get_post():
             g.user = {'id': 1, 'role': 'admin'}
             return 'Success', 200
-        resp = self.client.get('/test_authorize_admin_get')
-        eq_(resp.status_code, 200)
+        assert_raises(RuntimeError, self.client.get, '/test_authorize_admin_get')
