@@ -4,7 +4,9 @@ from tests.models.post import Post
 
 class PostPolicy(ApplicationPolicy):
     def get(self):
-        return True
+        if self.user.get('role') == 'admin':
+            return True
+        return False
 
     def index(self):
         return True

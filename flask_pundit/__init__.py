@@ -7,12 +7,26 @@ from functools import wraps
 def verify_authorized(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        pundit = flask.current_app.get('extensions').get('flask_pundit')
+        pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
         stack_top = pundit._get_stack_top()
-        stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', []).\
-            append(pundit._verify_authorized)
+        stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
+        stack_top.pundit_callbacks.append(pundit._verify_authorized)
         return func(*args, **kwargs)
     return inner
+
+
+def _process_verification_hooks(response):
+    pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
+    stack_top = pundit._get_stack_top()
+    callbacks = getattr(stack_top, 'pundit_callbacks', None)
+    if callbacks is not None:
+        while len(callbacks) > 0:
+            call = callbacks.pop()
+            if call() is False:
+                raise RuntimeError('''
+                Failed to call authorize/policy_scope method
+                but used verification decorator''')
+    return response
 
 
 class FlaskPundit(object):
@@ -26,6 +40,7 @@ class FlaskPundit(object):
         if not hasattr(app, 'extensions'):
             app.extensions = {}
         app.extensions['flask_pundit'] = self
+        app.after_request(_process_verification_hooks)
 
     def _get_app(self):
         if self.app:
@@ -72,26 +87,17 @@ class FlaskPundit(object):
 
     def _verify_authorized(self):
         stack_top = self._get_stack_top()
-        if getattr(stack_top, 'authorize_called'):
+        if getattr(stack_top, 'authorize_called', None):
             stack_top.authorize_called = False
             return True
         return False
 
     def _verify_policy_scoped(self):
         stack_top = self._get_stack_top()
-        if getattr(stack_top, 'policy_scope_called'):
+        if getattr(stack_top, 'policy_scope_called', None):
             stack_top.policy_scope_called = False
             return True
         return False
-
-    def _process_after_request_hooks(self):
-        stack_top = self._get_stack_top()
-        callbacks = getattr(stack_top, 'pundit_callbacks')
-        if callbacks is not None:
-            while len(callbacks) > 0:
-                call = callbacks.pop()
-                if call() is False:
-                    raise ForbiddenError('Failed to call authorize method')
 
     def _get_current_user(self):
         return flask.g.get('user') or flask.g.get('current_user')
