@@ -8,9 +8,8 @@ class PostPolicy(ApplicationPolicy):
             return True
         return False
 
-    def index(self):
-        return True
-
-    class Scope:
+    class Scope(ApplicationPolicy.Scope):
         def resolve(self):
-            return [Post(id=1), Post(id=2)]
+            if self.user.get('role') == 'admin':
+                return [1, 2]
+            return [3, 4]

@@ -106,10 +106,17 @@ class FlaskPundit(object):
         return flask.g.get('user') or flask.g.get('current_user')
 
     def _get_policy_clazz(self, record):
-        record_clazz_name = getattr(getattr(record, '__class__'), '__name__')
+        record_clazz_name = self._get_model_name(record)
         policy_clazz = getattr(self._get_policy_module(record_clazz_name),
                                record_clazz_name + 'Policy')
         return policy_clazz
+
+    def _get_model_name(self, record):
+        if getattr(record, '__class__', None):
+            record_clazz_name = getattr(getattr(record, '__class__'), '__name__')
+        else:
+            record_clazz_name = getattr(record, '__name__')
+        return record_clazz_name
 
     def _get_scope_clazz(self, record):
         policy_clazz = self._get_policy_clazz(record)
