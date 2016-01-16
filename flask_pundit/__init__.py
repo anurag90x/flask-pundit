@@ -14,6 +14,15 @@ def verify_authorized(func):
         return func(*args, **kwargs)
     return inner
 
+def verify_policy_scoped(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
+        stack_top = pundit._get_stack_top()
+        stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
+        stack_top.pundit_callbacks.append(pundit._verify_policy_scoped)
+        return func(*args, **kwargs)
+    return inner
 
 def _process_verification_hooks(response):
     pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
@@ -64,16 +73,16 @@ class FlaskPundit(object):
         self._get_stack_top().authorize_called = True
         return getattr(policy_clazz(current_user, record), action)()
 
-    def policy_scope(self, record, user=None):
+    def policy_scope(self, scope, user=None):
         """ Call this method from within a resource or
         For example, blog posts only viewable by the admin's staff.
         """
-        if record is None:
-            raise RuntimeError('Need to pass a record object')
+        if scope is None:
+            raise RuntimeError('Need to pass a model class')
 
         current_user = user or self._get_current_user()
         action = constants.SCOPE_ACTION
-        scope_clazz = self._get_scope_clazz(record)
+        scope_clazz = self._get_scope_clazz(scope)
 
         if scope_clazz is None:
             raise RuntimeError('''
@@ -83,7 +92,7 @@ class FlaskPundit(object):
                 scope class definition ''')
 
         self._get_stack_top().policy_scope_called = True
-        return getattr(scope_clazz(current_user, record), action)()
+        return getattr(scope_clazz(current_user, scope), action)()
 
     def _verify_authorized(self):
         stack_top = self._get_stack_top()

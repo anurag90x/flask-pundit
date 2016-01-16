@@ -57,5 +57,4 @@ class TestFlaskPundit(TestCase):
         policy_class = Mock(Scope=scope_class)
 
         self.pundit._get_policy_clazz = Mock(return_value = policy_class)
-        record = Mock()
-        eq_(self.pundit.policy_scope(record), [1,2,3])
+        eq_(self.pundit.policy_scope(Mock()), [1,2,3])
