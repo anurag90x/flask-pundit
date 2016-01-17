@@ -58,3 +58,15 @@ class TestFlaskPundit(TestCase):
 
         self.pundit._get_policy_clazz = Mock(return_value = policy_class)
         eq_(self.pundit.policy_scope(Mock()), [1,2,3])
+
+    def test_get_policy_clazz(self):
+        pass
+
+    def test_get_policy_module(self):
+        pass
+
+    def test_get_scope_clazz(self):
+        pass
+
+    def test_get_model_name(self):
+        pass

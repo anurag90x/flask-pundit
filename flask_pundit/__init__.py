@@ -27,14 +27,13 @@ def verify_policy_scoped(func):
 def _process_verification_hooks(response):
     pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
     stack_top = pundit._get_stack_top()
-    callbacks = getattr(stack_top, 'pundit_callbacks', None)
-    if callbacks is not None:
-        while len(callbacks) > 0:
-            call = callbacks.pop()
-            if call() is False:
-                raise RuntimeError('''
-                Failed to call authorize/policy_scope method
-                but used verification decorator''')
+    callbacks = getattr(stack_top, 'pundit_callbacks', [])
+    while len(callbacks) > 0:
+        call = callbacks.pop()
+        if call() is False:
+            raise RuntimeError('''
+            Failed to call authorize/policy_scope method
+            but used verification decorator''')
     return response
 
 
@@ -64,7 +63,7 @@ class FlaskPundit(object):
         a route to authorize a model instance
         """
         if record is None:
-            raise RuntimeError('Need to pass a record object')
+            raise RuntimeError('Need to pass a record object or model class')
 
         current_user = user or self._get_current_user()
         action = action or self._get_action_from_request()

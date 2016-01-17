@@ -4,9 +4,7 @@ from tests.models.post import Post
 
 class PostPolicy(ApplicationPolicy):
     def get(self):
-        if self.user.get('role') == 'admin':
-            return True
-        return False
+        return self.user.get('role') == 'admin'
 
     class Scope(ApplicationPolicy.Scope):
         def resolve(self):
