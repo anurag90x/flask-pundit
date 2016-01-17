@@ -111,6 +111,11 @@ class FlaskPundit(object):
         return policy_clazz
 
     def _get_model_name(self, record):
+        ''' Returns the name of the model corresponding to a record.
+        If record is an object i.e has a __class__ attr then returns the class
+        name else assumes that something with a __name__ was passed which should
+        be a class
+        '''
         if getattr(record, '__class__', None):
             record_clazz_name = getattr(getattr(record, '__class__'), '__name__')
         else:

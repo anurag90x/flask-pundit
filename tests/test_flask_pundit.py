@@ -60,13 +60,13 @@ class TestFlaskPundit(TestCase):
         eq_(self.pundit.policy_scope(Mock()), [1,2,3])
 
     def test_get_policy_clazz(self):
-        pass
+        module = Mock(PostPolicy = Mock(__name__ = 'Post'),
+                      UserPolicy = Mock(__name__ = 'User'))
+        self.pundit._get_model_name = Mock(return_value = 'Post')
+        self.pundit._get_policy_module = Mock(return_value = module)
+        eq_(self.pundit._get_policy_clazz(Mock()), module.PostPolicy)
 
-    def test_get_policy_module(self):
-        pass
-
-    def test_get_scope_clazz(self):
-        pass
-
-    def test_get_model_name(self):
-        pass
+    def test_get_model_name_with_object(self):
+        record_class = Mock(__name__ = 'Record')
+        record = Mock(__class__ = record_class)
+        eq_(self.pundit._get_model_name(record), 'Record')
