@@ -3,11 +3,14 @@ from flask_pundit import (
     FlaskPundit,
     verify_authorized,
     verify_policy_scoped)
-from models.user import User
 from models.post import Post
-from nose.tools import *
+from nose.tools import (
+    assert_raises,
+    ok_,
+    eq_)
 from unittest import TestCase
 import json
+
 
 class TestUsage(TestCase):
     def setUp(self):
@@ -20,7 +23,7 @@ class TestUsage(TestCase):
     def test_authorize_with_record_for_admin(self):
         def do_authorize_stuff():
             post = Post(1)
-            return  self.pundit.authorize(post)
+            return self.pundit.authorize(post)
 
         @self.app.route('/test_authorize_admin_get')
         def admin_get_post():
@@ -37,7 +40,7 @@ class TestUsage(TestCase):
     def test_authorize_with_record_for_staff(self):
         def do_authorize_stuff():
             post = Post(1)
-            return  self.pundit.authorize(post)
+            return self.pundit.authorize(post)
 
         @self.app.route('/test_authorize_staff_get')
         def admin_get_post():
@@ -54,7 +57,7 @@ class TestUsage(TestCase):
     def test_verify_authorized_decorator_success(self):
         def do_authorize_stuff():
             post = Post(1)
-            return  self.pundit.authorize(post)
+            return self.pundit.authorize(post)
 
         @self.app.route('/test_authorize_admin_get')
         @verify_authorized
@@ -71,18 +74,19 @@ class TestUsage(TestCase):
     def test_verify_authorized_decorator_raises_exception(self):
         def do_authorize_stuff():
             post = Post(1)
-            return  self.pundit.authorize(post)
+            return self.pundit.authorize(post)
 
         @self.app.route('/test_authorize_admin_get')
         @verify_authorized
         def admin_get_post():
             g.user = {'id': 1, 'role': 'admin'}
             return 'Success', 200
-        assert_raises(RuntimeError, self.client.get, '/test_authorize_admin_get')
+        assert_raises(RuntimeError, self.client.get,
+                      '/test_authorize_admin_get')
 
     def test_policy_scoped_admin(self):
         def do_policy_scope_stuff():
-            return  self.pundit.policy_scope(Post)
+            return self.pundit.policy_scope(Post)
 
         @self.app.route('/test_policy_scope_admin')
         def admin_get_post():
@@ -95,7 +99,7 @@ class TestUsage(TestCase):
 
     def test_policy_scoped_staff(self):
         def do_policy_scope_stuff():
-            return  self.pundit.policy_scope(Post)
+            return self.pundit.policy_scope(Post)
 
         @self.app.route('/test_policy_scope_staff')
         def admin_get_post():
@@ -106,10 +110,9 @@ class TestUsage(TestCase):
         resp = self.client.get('/test_policy_scope_staff')
         eq_(resp.data, '{"posts": [3, 4]}')
 
-
     def test_verify_policy_scoped_decorator_success(self):
         def do_policy_scope_stuff():
-            return  self.pundit.policy_scope(Post)
+            return self.pundit.policy_scope(Post)
 
         @self.app.route('/test_policy_scope_admin')
         @verify_policy_scoped
@@ -120,14 +123,14 @@ class TestUsage(TestCase):
         resp = self.client.get('/test_policy_scope_admin')
         eq_(resp.data, '{"posts": [1, 2]}')
 
-
     def test_verify_policy_scoped_decorator_raises_exception(self):
         def do_policy_scope_stuff():
-            return  self.pundit.policy_scope(Post)
+            return self.pundit.policy_scope(Post)
 
         @self.app.route('/test_policy_scope_admin')
         @verify_policy_scoped
         def admin_get_post():
             g.user = {'id': 1, 'role': 'admin'}
             return json.dumps({'posts': []})
-        assert_raises(RuntimeError, self.client.get, '/test_policy_scope_admin')
+        assert_raises(RuntimeError, self.client.get,
+                      '/test_policy_scope_admin')

@@ -1,28 +1,30 @@
-import constants
 import flask
-
 from functools import wraps
 
 
 def verify_authorized(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
+        pundit = getattr(flask.current_app, 'extensions', {})\
+            .get('flask_pundit')
         stack_top = pundit._get_stack_top()
         stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
         stack_top.pundit_callbacks.append(pundit._verify_authorized)
         return func(*args, **kwargs)
     return inner
 
+
 def verify_policy_scoped(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
+        pundit = getattr(flask.current_app, 'extensions', {})\
+            .get('flask_pundit')
         stack_top = pundit._get_stack_top()
         stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
         stack_top.pundit_callbacks.append(pundit._verify_policy_scoped)
         return func(*args, **kwargs)
     return inner
+
 
 def _process_verification_hooks(response):
     pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
@@ -38,6 +40,11 @@ def _process_verification_hooks(response):
 
 
 class FlaskPundit(object):
+
+    SCOPE_ACTION = 'resolve'
+    POLICY_SUFFIX = 'Policy'
+    SCOPE_SUFFIX = 'Scope'
+
     def __init__(self, app=None, policies_path='policies'):
         self.app = app
         self.policies_path = policies_path
@@ -62,9 +69,6 @@ class FlaskPundit(object):
         """ Call this method from within a resource or
         a route to authorize a model instance
         """
-        if record is None:
-            raise RuntimeError('Need to pass a record object or model class')
-
         current_user = user or self._get_current_user()
         action = action or self._get_action_from_request()
         policy_clazz = self._get_policy_clazz(record)
@@ -76,19 +80,9 @@ class FlaskPundit(object):
         """ Call this method from within a resource or
         For example, blog posts only viewable by the admin's staff.
         """
-        if scope is None:
-            raise RuntimeError('Need to pass a model class')
-
         current_user = user or self._get_current_user()
-        action = constants.SCOPE_ACTION
+        action = FlaskPundit.SCOPE_ACTION
         scope_clazz = self._get_scope_clazz(scope)
-
-        if scope_clazz is None:
-            raise RuntimeError('''
-                Policy class is missing inner Scope class. Either
-                inherit from ApplicationPolicy or create your own
-                inner Scope class/ base policy class with an inner
-                scope class definition ''')
 
         self._get_stack_top().policy_scope_called = True
         return getattr(scope_clazz(current_user, scope), action)()
@@ -105,32 +99,38 @@ class FlaskPundit(object):
         return flask.g.get('user') or flask.g.get('current_user')
 
     def _get_policy_clazz(self, record):
+        if record is None:
+            raise RuntimeError('''
+            Need to pass an object or class type as a record''')
+
         record_clazz_name = self._get_model_name(record)
         policy_clazz = getattr(self._get_policy_module(record_clazz_name),
-                               record_clazz_name + 'Policy')
+                               record_clazz_name + FlaskPundit.POLICY_SUFFIX)
         return policy_clazz
 
     def _get_model_name(self, record):
         ''' Returns the name of the model corresponding to a record.
-        If record is an object i.e has a __class__ attr then returns the class
-        name else assumes that something with a __name__ was passed which should
-        be a class
+        If record is an object i.e has a __class__ attr then returns
+        the class name else assumes that something with a __name__
+        was passed which should be a class
         '''
         if getattr(record, '__class__', None):
-            record_clazz_name = getattr(getattr(record, '__class__'), '__name__')
+            record_clazz_name = getattr(getattr(record, '__class__'),
+                                        '__name__')
         else:
             record_clazz_name = getattr(record, '__name__')
         return record_clazz_name
 
     def _get_scope_clazz(self, record):
         policy_clazz = self._get_policy_clazz(record)
-        return getattr(policy_clazz, 'Scope')
+        return getattr(policy_clazz, FlaskPundit.SCOPE_SUFFIX)
 
     def _get_policy_module(self, record_clazz_name):
         policy_clazz_path = '.'.join([self.policies_path,
                                       record_clazz_name.lower()])
         policy_clazz_module = __import__(policy_clazz_path,
-                                         fromlist=[record_clazz_name + 'Policy'],
+                                         fromlist=[record_clazz_name +
+                                                   FlaskPundit.POLICY_SUFFIX],
                                          )
         return policy_clazz_module
 
