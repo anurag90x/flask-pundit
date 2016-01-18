@@ -9,7 +9,7 @@ setup(
     name='Flask-Pundit',
     version='1.0.0',
     license='MIT',
-    url='https://www.github.com/flask-pundit/flask-pundit/',
+    url='https://github.com/anurag90x/flask-pundit',
     author='Anurag Chaudhury',
     author_email='anuragchaudhury@gmail.com',
     description='Simple library to manage resource authorization and scopoing',
