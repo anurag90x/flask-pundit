@@ -34,7 +34,7 @@ Now onto how to actually use the extension.
 Flask-Pundit like Pundit offers two methods for use in resources (or if you like, controllers). The first is the `authorize` method. This is how you would use
 the method if you're writing a simple single module app.
 
-```
+```python
 app = Flask('blog_series')
 pundit = FlaskPundit(app)
 
@@ -46,8 +46,14 @@ def read_blog(blog_id):
         return ForbiddenError, 403
 ```
 
-The authorize method takes 3 parameters -
+The authorize method takes 3 parameters:
+
 1. A record - This can be either an object or class and corresponds to a 'model' that you're doing the authorization on.
-2. A user - This is akin to the currently 'logged in' user. If no user object is provided, flask-pundit tries to pick either `flask.g.user` or `flask.g.current_user`, whichever is available.
-3. An action - This corresponds to the policy method that you want to invoke for doing the authorization. If no value is provided it defaults to `request.method.lowercase()`. Thus in the previous snippet the `get` method of a `BlogPolicy` object would be invoked.
+
+2. An action - This corresponds to the policy method that you want to invoke for doing the authorization. If no value is provided it
+defaults to `request.method.lowercase()`. Thus in the previous snippet the `get` method of a `BlogPolicy` object would be invoked.
+
+3. A user - This is akin to the currently 'logged in' user. If no user object is provided, flask-pundit tries to pick either `flask.g.user` or 
+`flask.g.current_user`, whichever is available.
+
 
