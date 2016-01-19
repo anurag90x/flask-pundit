@@ -6,6 +6,9 @@ class PostPolicy(ApplicationPolicy):
     def get(self):
         return self.user.get('role') == 'admin'
 
+    def create(self):
+        return self.user.get('role') == 'admin'
+
     class Scope(ApplicationPolicy.Scope):
         def resolve(self):
             if self.user.get('role') == 'admin':

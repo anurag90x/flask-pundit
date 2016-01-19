@@ -54,6 +54,22 @@ class TestUsage(TestCase):
         resp = self.client.get('/test_authorize_staff_get')
         eq_(resp.status_code, 403)
 
+    def test_authorize_with_model_for_admin(self):
+        def do_authorize_stuff():
+            return self.pundit.authorize(Post, action='create')
+
+        @self.app.route('/test_authorize_admin_create')
+        def admin_create_post():
+            g.user = {'id': 1, 'role': 'admin'}
+            is_authorized = do_authorize_stuff()
+            ok_(self.pundit._verify_authorized())
+            if is_authorized:
+                return 'Success', 200
+            else:
+                return 'Forbidden', 403
+        resp = self.client.get('/test_authorize_admin_create')
+        eq_(resp.status_code, 200)
+
     def test_verify_authorized_decorator_success(self):
         def do_authorize_stuff():
             post = Post(1)
