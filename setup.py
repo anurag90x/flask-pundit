@@ -6,7 +6,7 @@ requirements = [
 ]
 
 setup(
-    name='Flask-Pundit',
+    name='flask-pundit',
     version='1.0.0',
     license='MIT',
     url='https://github.com/anurag90x/flask-pundit',
