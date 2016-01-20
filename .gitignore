@@ -1,5 +1,6 @@
 .DS_Store
 tags
-*.pyc
 build
 dist
+*.pyc
+*.egg-info
