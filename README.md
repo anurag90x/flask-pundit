@@ -14,6 +14,7 @@ You can initialize the extension in one of 2 ways -
 When initializing the extension, you can provide an optional `policies_path` parameter which tells Flask-Pundit where to find your policy classes. If no value is specified this defaults to `policies`.
 
 What is this `policies_path` exactly?
+
 Flask-Pundit expects you to have 1 policy per model class. To find the Policy for a particular model it needs to know where to look. That is the `policies_path`. 
 
 ## Policies
@@ -109,7 +110,8 @@ def index():
 ```
 The examples here show how to return all posts for an admin and only staff posts for a staff user.
 
-The `policy_scope` method takes 2 arguments
+The `policy_scope` method takes 2 arguments:
+
 1. A model - This is the class that is to be 'scoped'.
 
 2. A user object - This is just like the user object in the authorize case.
@@ -134,4 +136,4 @@ def read_blog_post(id):
 ```
 If you remove the call to `authorize` the decorator will throw a `RuntimeError` as it expects a call but found none.
 
-The `verify_policy_scoped` decorator would be used in the exact same way. Using these 2 would prove more useful if you're using something like [Flask-Restful](https://github/flask-restful/flask-restful) where you could specify these as `method_decorators` in your resource, if you wanted all the methods to be verified.
+The `verify_policy_scoped` decorator would be used in the exact same way. Using these 2 would prove more useful if you're using something like [Flask-Restful](https://github.com/flask-restful/flask-restful) where you could specify these as `method_decorators` in your resource, if you wanted all the methods to be verified.
