@@ -103,6 +103,16 @@ class FlaskPundit(object):
             raise RuntimeError('''
             Need to pass an object or class type as a record''')
 
+        model_policy_clazz = self._get_policy_clazz_from_model(record)
+        return model_policy_clazz if model_policy_clazz is not None else\
+            self._get_policy_clazz_from_policy_module(record)
+
+    def _get_policy_clazz_from_model(self, record):
+        model = getattr(record, '__class__', None)
+        if model is not None:
+            return getattr(model, '__policy_class__', None)
+
+    def _get_policy_clazz_from_policy_module(self, record):
         record_clazz_name = self._get_model_name(record)
         policy_clazz = getattr(self._get_policy_module(record_clazz_name),
                                record_clazz_name + FlaskPundit.POLICY_SUFFIX)
