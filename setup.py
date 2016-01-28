@@ -12,7 +12,7 @@ setup(
     url='https://github.com/anurag90x/flask-pundit',
     author='Anurag Chaudhury',
     author_email='anuragchaudhury@gmail.com',
-    description='Simple library to manage resource authorization and scopoing',
+    description='Simple library to manage resource authorization and scoping',
     packages=find_packages(exclude=['tests']),
     zip_safe=False,
     include_package_data=True,
