@@ -71,7 +71,7 @@ defaults to `request.method.lowercase()`. Thus in the previous snippet the `get`
 
 Thus in the above set of examples, invoking `authorize` executes the `get` method in the `PostPolicy` class at `policies/post` with the record being the `post` object filtered by id.
 
-### Scopes
+## Scopes
 
 The `authorize` method acts more as a true/false guard. On the other hand the `policy_scope` method returns a 'scoped' version of a model. For example, if you have a page with all posts, you might want to let an admin see all of them but restrict the ones staff users see. This is where you'd want to use `policy_scope` instead of `authorize`.
 
@@ -137,3 +137,7 @@ def read_blog_post(id):
 If you remove the call to `authorize` the decorator will throw a `RuntimeError` as it expects a call but found none.
 
 The `verify_policy_scoped` decorator would be used in the exact same way. Using these 2 would prove more useful if you're using something like [Flask-Restful](https://github.com/flask-restful/flask-restful) where you could specify these as `method_decorators` in your resource, if you wanted all the methods to be verified.
+
+## License
+
+Licensed under MIT license
