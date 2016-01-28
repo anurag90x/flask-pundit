@@ -108,28 +108,25 @@ class FlaskPundit(object):
             self._get_policy_clazz_from_policy_module(record)
 
     def _get_policy_clazz_from_model(self, record):
-        model = getattr(record, '__class__', None)
-        if model is not None:
-            return getattr(model, '__policy_class__', None)
+        model = self._get_model_class(record)
+        return getattr(model, '__policy_class__', None)
 
     def _get_policy_clazz_from_policy_module(self, record):
-        record_clazz_name = self._get_model_name(record)
+        record_clazz = self._get_model_class(record)
+        record_clazz_name = getattr(record_clazz, '__name__')
         policy_clazz = getattr(self._get_policy_module(record_clazz_name),
                                record_clazz_name + FlaskPundit.POLICY_SUFFIX)
         return policy_clazz
 
-    def _get_model_name(self, record):
-        ''' Returns the name of the model corresponding to a record.
+    def _get_model_class(self, record):
+        ''' Returns the model corresponding to a record.
         If record is an object i.e has a __class__ attr then returns
-        the class name else assumes that something with a __name__
-        was passed which should be a class
+        the class else returns the class
         '''
-        if getattr(record, '__class__', None):
-            record_clazz_name = getattr(getattr(record, '__class__'),
-                                        '__name__')
-        else:
-            record_clazz_name = getattr(record, '__name__')
-        return record_clazz_name
+        record_class = getattr(record, '__class__', None)
+        if record_class is not None:
+            return record_class
+        return record
 
     def _get_scope_clazz(self, record):
         policy_clazz = self._get_policy_clazz(record)
