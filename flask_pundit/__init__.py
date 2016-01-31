@@ -78,6 +78,7 @@ class FlaskPundit(object):
 
     def policy_scope(self, scope, user=None):
         """ Call this method from within a resource or
+        a route to return a scoped version of a mdoel
         For example, blog posts only viewable by the admin's staff.
         """
         current_user = user or self._get_current_user()
@@ -112,16 +113,16 @@ class FlaskPundit(object):
         return getattr(model, '__policy_class__', None)
 
     def _get_policy_clazz_from_policy_module(self, record):
-        record_clazz = self._get_model_class(record)
-        record_clazz_name = getattr(record_clazz, '__name__')
-        policy_clazz = getattr(self._get_policy_module(record_clazz_name),
-                               record_clazz_name + FlaskPundit.POLICY_SUFFIX)
+        model = self._get_model_class(record)
+        model_name = getattr(model, '__name__')
+        policy_clazz = getattr(self._get_policy_module(model_name),
+                               model_name + FlaskPundit.POLICY_SUFFIX)
         return policy_clazz
 
     def _get_model_class(self, record):
         ''' Returns the model corresponding to a record.
         If record is an object i.e has a __class__ attr then returns
-        the class else returns the class
+        the object's class else returns the record (which should be a class)
         '''
         record_class = getattr(record, '__class__', None)
         if record_class is not None:
@@ -132,11 +133,11 @@ class FlaskPundit(object):
         policy_clazz = self._get_policy_clazz(record)
         return getattr(policy_clazz, FlaskPundit.SCOPE_SUFFIX)
 
-    def _get_policy_module(self, record_clazz_name):
+    def _get_policy_module(self, model_name):
         policy_clazz_path = '.'.join([self.policies_path,
-                                      record_clazz_name.lower()])
+                                      model_name.lower()])
         policy_clazz_module = __import__(policy_clazz_path,
-                                         fromlist=[record_clazz_name +
+                                         fromlist=[model_name +
                                                    FlaskPundit.POLICY_SUFFIX],
                                          )
         return policy_clazz_module

@@ -1,4 +1,5 @@
 from flask_pundit import FlaskPundit
+from tests.policies.post import PostPolicy
 from mock import Mock, patch
 from nose.tools import ok_, eq_, assert_raises
 from unittest import TestCase
@@ -67,3 +68,11 @@ class TestFlaskPundit(TestCase):
         record_class = Mock(__name__='Record')
         record = Mock(__class__=record_class)
         eq_(self.pundit._get_model_class(record), record_class)
+
+    def test_get_model_class_with_class(self):
+        eq_(self.pundit._get_model_class(PostPolicy), PostPolicy)
+
+    def test_get_policy_clazz_from_model(self):
+        self.pundit._get_model_class = Mock(
+            return_value=Mock(__policy_class__=PostPolicy))
+        eq_(self.pundit._get_policy_clazz_from_model(Mock()), PostPolicy)
