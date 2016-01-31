@@ -91,8 +91,8 @@ class PostPolicy(ApplicationPolicy):
 
                 def resolve(self):
                         if self.user == 'admin':
-                                return Post.all()
-                        return Post.filter_by(author='staff')
+                                return scope.all()
+                        return scope.filter_by(author='staff')
 ```
 The `Scope` class for a model should always be an inner class of the corresponding Policy class. The constructor takes 2 arguments - the user (exactly like in the Policy class) and a `scope` which is the model you want to return a subset of.
 
@@ -137,6 +137,20 @@ def read_blog_post(id):
 If you remove the call to `authorize` the decorator will throw a `RuntimeError` as it expects a call but found none.
 
 The `verify_policy_scoped` decorator would be used in the exact same way. Using these 2 would prove more useful if you're using something like [Flask-Restful](https://github.com/flask-restful/flask-restful) where you could specify these as `method_decorators` in your resource, if you wanted all the methods to be verified.
+
+If you prefer not using decorators you could use `pundit._verify_authorized` and `pundit._verify_policy_scoped` directly inside your methods. Calling them directly will return `True` or `False`.
+
+## Custom Policy class
+
+You could override the policy class lookup behaviour by adding a `__policy_class__` property on your models. This should reference the class that you want to be used against this model. For example,
+
+```python
+from policies.commenting import CommentingPolicy
+
+class Comment:
+        __policy_class__ = CommentingPolicy
+```
+Now when doing either `authorize` or `policy_scope` against an instance of `Comment` or the class itself, `CommentingPolicy` will be used.
 
 ## License
 
