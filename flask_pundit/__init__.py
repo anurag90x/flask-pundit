@@ -1,3 +1,4 @@
+import inspect
 import flask
 from functools import wraps
 
@@ -124,10 +125,11 @@ class FlaskPundit(object):
         If record is an object i.e has a __class__ attr then returns
         the object's class else returns the record (which should be a class)
         '''
+        if inspect.isclass(record):
+            return record
         record_class = getattr(record, '__class__', None)
         if record_class is not None:
             return record_class
-        return record
 
     def _get_scope_clazz(self, record):
         policy_clazz = self._get_policy_clazz(record)

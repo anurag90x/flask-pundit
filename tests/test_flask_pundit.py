@@ -72,6 +72,11 @@ class TestFlaskPundit(TestCase):
     def test_get_model_class_with_class(self):
         eq_(self.pundit._get_model_class(PostPolicy), PostPolicy)
 
+    def test_get_model_class_with_child_class(self):
+        class ChildPostPolicy(PostPolicy):
+            pass
+        eq_(self.pundit._get_model_class(ChildPostPolicy), ChildPostPolicy)
+
     def test_get_policy_clazz_from_model(self):
         self.pundit._get_model_class = Mock(
             return_value=Mock(__policy_class__=PostPolicy))
