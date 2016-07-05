@@ -9,5 +9,5 @@ class ApplicationPolicy:
             self.user = user
             self.scope = scope
 
-        def resolve(self):
+        def resolve(self, *args, **kwargs):
             pass

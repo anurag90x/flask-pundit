@@ -38,6 +38,23 @@ class TestUsage(TestCase):
         resp = self.client.get('/test_authorize_admin_get')
         eq_(resp.status_code, 200)
 
+    def test_authorize_with_record_for_admin_with_params(self):
+        def do_authorize_stuff():
+            post = Post(1)
+            return self.pundit.authorize(post, thing_id=1)
+
+        @self.app.route('/test_authorize_admin_get')
+        def admin_get_post():
+            g.user = {'id': 1, 'role': 'admin'}
+            is_authorized = do_authorize_stuff()
+            ok_(self.pundit._verify_authorized())
+            if is_authorized:
+                return 'Success', 200
+            else:
+                return 'Forbidden', 403
+        resp = self.client.get('/test_authorize_admin_get')
+        eq_(resp.status_code, 403)
+
     def test_authorize_with_record_for_staff(self):
         def do_authorize_stuff():
             post = Post(1)

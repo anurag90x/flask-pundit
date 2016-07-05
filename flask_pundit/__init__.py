@@ -66,7 +66,7 @@ class FlaskPundit(object):
         raise RuntimeError('''
             Need to initialize extension with an app or have app context''')
 
-    def authorize(self, record, action=None, user=None):
+    def authorize(self, record, action=None, user=None, *args, **kwargs):
         """ Call this method from within a resource or
         a route to authorize a model instance
         """
@@ -75,9 +75,9 @@ class FlaskPundit(object):
         policy_clazz = self._get_policy_clazz(record)
 
         self._get_stack_top().authorize_called = True
-        return getattr(policy_clazz(current_user, record), action)()
+        return getattr(policy_clazz(current_user, record), action)(*args, **kwargs)
 
-    def policy_scope(self, scope, user=None):
+    def policy_scope(self, scope, user=None, *args, **kwargs):
         """ Call this method from within a resource or
         a route to return a scoped version of a mdoel
         For example, blog posts only viewable by the admin's staff.
@@ -87,7 +87,7 @@ class FlaskPundit(object):
         scope_clazz = self._get_scope_clazz(scope)
 
         self._get_stack_top().policy_scope_called = True
-        return getattr(scope_clazz(current_user, scope), action)()
+        return getattr(scope_clazz(current_user, scope), action)(*args, **kwargs)
 
     def _verify_authorized(self):
         stack_top = self._get_stack_top()

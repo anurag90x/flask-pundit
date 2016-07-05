@@ -2,7 +2,9 @@ from flask_pundit.application_policy import ApplicationPolicy
 
 
 class PostPolicy(ApplicationPolicy):
-    def get(self):
+    def get(self, *args, **kwargs):
+        if kwargs.get('thing_id') == 1:
+            return False
         return self.user.get('role') == 'admin'
 
     def create(self):
