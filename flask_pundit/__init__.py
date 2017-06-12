@@ -10,15 +10,12 @@ def verify_authorized(func):
         pundit = getattr(flask.current_app, 'extensions', {})\
             .get('flask_pundit')
         stack_top = pundit._get_stack_top()
-        stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
-        stack_top.pundit_callbacks.append(pundit._verify_authorized)
-        response = ''
-        try:
-            response = func(*args, **kwargs)
-            return response
-        except:
-            stack_top.pundit_callbacks.pop()
-            raise
+        response = func(*args, **kwargs)
+        if not getattr(stack_top, 'authorize_called', False):
+            raise RuntimeError('''
+            Failed to call authorize method
+            but used verification decorator''')
+        return response
     return inner
 
 
@@ -52,7 +49,6 @@ class FlaskPundit(object):
         if not hasattr(app, 'extensions'):
             app.extensions = {}
         app.extensions['flask_pundit'] = self
-        app.after_request(_process_verification_hooks)
 
     def _get_app(self):
         if self.app:
