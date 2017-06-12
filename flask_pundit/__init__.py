@@ -1,6 +1,7 @@
 import inspect
 import flask
 from functools import wraps
+from helpers import dasherized_name
 
 
 def verify_authorized(func):
