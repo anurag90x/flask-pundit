@@ -1,6 +1,7 @@
 import inspect
 import flask
 from functools import wraps
+from helpers import dasherized_name
 
 
 def verify_authorized(func):
@@ -11,7 +12,12 @@ def verify_authorized(func):
         stack_top = pundit._get_stack_top()
         stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
         stack_top.pundit_callbacks.append(pundit._verify_authorized)
-        return func(*args, **kwargs)
+        response = ''
+        try:
+            response = func(*args, **kwargs)
+        except:
+            stack_top.pundit_callbacks.pop()
+        return response
     return inner
 
 
@@ -23,7 +29,12 @@ def verify_policy_scoped(func):
         stack_top = pundit._get_stack_top()
         stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
         stack_top.pundit_callbacks.append(pundit._verify_policy_scoped)
-        return func(*args, **kwargs)
+        response = ''
+        try:
+            response = func(*args, **kwargs)
+        except:
+            stack_top.pundit_callbacks.pop()
+        return response
     return inner
 
 
@@ -75,7 +86,9 @@ class FlaskPundit(object):
         policy_clazz = self._get_policy_clazz(record)
 
         self._get_stack_top().authorize_called = True
-        return getattr(policy_clazz(current_user, record), action)(*args, **kwargs)
+        return getattr(
+            policy_clazz(current_user, record), action
+        )(*args, **kwargs)
 
     def policy_scope(self, scope, user=None, *args, **kwargs):
         """ Call this method from within a resource or
@@ -87,7 +100,9 @@ class FlaskPundit(object):
         scope_clazz = self._get_scope_clazz(scope)
 
         self._get_stack_top().policy_scope_called = True
-        return getattr(scope_clazz(current_user, scope), action)(*args, **kwargs)
+        return getattr(
+            scope_clazz(current_user, scope), action
+        )(*args, **kwargs)
 
     def _verify_authorized(self):
         stack_top = self._get_stack_top()
@@ -136,12 +151,13 @@ class FlaskPundit(object):
         return getattr(policy_clazz, FlaskPundit.SCOPE_SUFFIX)
 
     def _get_policy_module(self, model_name):
+        dasherized_model_name = dasherized_name(model_name)
         policy_clazz_path = '.'.join([self.policies_path,
-                                      model_name.lower()])
-        policy_clazz_module = __import__(policy_clazz_path,
-                                         fromlist=[model_name +
-                                                   FlaskPundit.POLICY_SUFFIX],
-                                         )
+                                      dasherized_model_name])
+        policy_clazz_module = __import__(
+            policy_clazz_path,
+            fromlist=[dasherized_model_name + FlaskPundit.POLICY_SUFFIX],
+        )
         return policy_clazz_module
 
     def _get_action_from_request(self):

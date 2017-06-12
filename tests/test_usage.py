@@ -10,6 +10,7 @@ from nose.tools import (
     ok_,
     eq_)
 from unittest import TestCase
+from werkzeug.exceptions import BadRequest
 import json
 
 
@@ -133,6 +134,24 @@ class TestUsage(TestCase):
             return 'Success', 200
         assert_raises(RuntimeError, self.client.get,
                       '/test_authorize_admin_get')
+
+    def test_verify_authorized_decorator_ignores_raised_exception(self):
+        def do_authorize_stuff():
+            post = Post(1)
+            return self.pundit.authorize(post)
+
+        @self.app.route('/test_authorize_admin_get')
+        @verify_authorized
+        def admin_get_post():
+            g.user = {'id': 1, 'role': 'admin'}
+            raise BadRequest()
+            is_authorized = do_authorize_stuff()
+            if is_authorized:
+                return 'Success', 200
+            else:
+                return 'Forbidden', 403
+        resp = self.client.get('/test_authorize_admin_get')
+        eq_(resp.status_code, 200)
 
     def test_policy_scoped_admin(self):
         def do_policy_scope_stuff():
