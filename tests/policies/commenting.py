@@ -5,8 +5,7 @@ class CommentingPolicy(ApplicationPolicy):
     def get(self):
         return self.user.get('role') == 'admin'
 
-    class Scope(ApplicationPolicy.Scope):
-        def resolve(self):
-            if self.user.get('role') == 'admin':
-                return ['Hello']
-            return ['World']
+    def scope(self):
+        if self.user.get('role') == 'admin':
+            return ['Hello']
+        return ['World']
