@@ -151,7 +151,7 @@ class TestUsage(TestCase):
             else:
                 return 'Forbidden', 403
         resp = self.client.get('/test_authorize_admin_get')
-        eq_(resp.status_code, 200)
+        eq_(resp.status_code, 400)
 
     def test_policy_scoped_admin(self):
         def do_policy_scope_stuff():

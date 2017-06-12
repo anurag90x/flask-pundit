@@ -15,9 +15,10 @@ def verify_authorized(func):
         response = ''
         try:
             response = func(*args, **kwargs)
+            return response
         except:
             stack_top.pundit_callbacks.pop()
-        return response
+            raise
     return inner
 
 
@@ -32,9 +33,10 @@ def verify_policy_scoped(func):
         response = ''
         try:
             response = func(*args, **kwargs)
+            return response
         except:
             stack_top.pundit_callbacks.pop()
-        return response
+            raise
     return inner
 
 
