@@ -52,11 +52,10 @@ class TestFlaskPundit(TestCase):
         assert_raises(AttributeError, self.pundit.authorize, record, 'update')
 
     @patch('flask_pundit.flask')
-    def test_policy_scope_triggers_resolve_action(self, flask):
+    def test_policy_scope_triggers_scope_action(self, flask):
         flask.configure_mock(**(self.get_flask_defaults()))
-        scope_class_instance = Mock(resolve=lambda: [1, 2, 3])
-        scope_class = Mock(return_value=scope_class_instance)
-        policy_class = Mock(Scope=scope_class)
+        policy_class_instance = Mock(scope=lambda: [1, 2, 3])
+        policy_class = Mock(return_value=policy_class_instance)
 
         self.pundit._get_policy_clazz = Mock(return_value=policy_class)
         eq_(self.pundit.policy_scope(Mock()), [1, 2, 3])

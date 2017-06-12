@@ -28,36 +28,19 @@ def verify_policy_scoped(func):
         pundit = getattr(flask.current_app, 'extensions', {})\
             .get('flask_pundit')
         stack_top = pundit._get_stack_top()
-        stack_top.pundit_callbacks = getattr(stack_top, 'pundit_callbacks', [])
-        stack_top.pundit_callbacks.append(pundit._verify_policy_scoped)
-        response = ''
-        try:
-            response = func(*args, **kwargs)
-            return response
-        except:
-            stack_top.pundit_callbacks.pop()
-            raise
-    return inner
-
-
-def _process_verification_hooks(response):
-    pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
-    stack_top = pundit._get_stack_top()
-    callbacks = getattr(stack_top, 'pundit_callbacks', [])
-    while len(callbacks) > 0:
-        call = callbacks.pop()
-        if call() is False:
+        response = func(*args, **kwargs)
+        if not getattr(stack_top, 'policy_scope_called', False):
             raise RuntimeError('''
-            Failed to call authorize/policy_scope method
+            Failed to call policy_scope method
             but used verification decorator''')
-    return response
+        return response
+    return inner
 
 
 class FlaskPundit(object):
 
-    SCOPE_ACTION = 'resolve'
+    SCOPE_ACTION = 'scope'
     POLICY_SUFFIX = 'Policy'
-    SCOPE_SUFFIX = 'Scope'
 
     def __init__(self, app=None, policies_path='policies'):
         self.app = app
@@ -99,11 +82,11 @@ class FlaskPundit(object):
         """
         current_user = user or self._get_current_user()
         action = FlaskPundit.SCOPE_ACTION
-        scope_clazz = self._get_scope_clazz(scope)
+        policy_clazz = self._get_policy_clazz(scope)
 
         self._get_stack_top().policy_scope_called = True
         return getattr(
-            scope_clazz(current_user, scope), action
+            policy_clazz(current_user, scope), action
         )(*args, **kwargs)
 
     def _verify_authorized(self):
@@ -147,10 +130,6 @@ class FlaskPundit(object):
         record_class = getattr(record, '__class__', None)
         if record_class is not None:
             return record_class
-
-    def _get_scope_clazz(self, record):
-        policy_clazz = self._get_policy_clazz(record)
-        return getattr(policy_clazz, FlaskPundit.SCOPE_SUFFIX)
 
     def _get_policy_module(self, model_name):
         dasherized_model_name = dasherized_name(model_name)
