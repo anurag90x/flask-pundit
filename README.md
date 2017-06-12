@@ -75,7 +75,7 @@ Thus in the above set of examples, invoking `authorize` executes the `get` metho
 
 The `authorize` method acts more as a true/false guard. On the other hand the `policy_scope` method returns a 'scoped' version of a model. For example, if you have a page with all posts, you might want to let an admin see all of them but restrict the ones staff users see. This is where you'd want to use `policy_scope` instead of `authorize`.
 
-To do so, you need to first have a `Scope` class. Scopes are classes that help you return 'scoped' versions of models. You can define a scope as:
+To do so, you need to define a `scope` method in your policy.
 
 ```python
 from flask_pundit.application_policy import ApplicationPolicy
@@ -83,22 +83,16 @@ from flask_pundit.application_policy import ApplicationPolicy
 class PostPolicy(ApplicationPolicy):
         def get(self):
                 return self.user == 'admin' and self.record.id == 1
+
+
+        def scope(self):
+                if self.user == 'admin':
+                        return record.all()
+                return record.filter_by(author='staff')
         
-        class Scope():
-                def __init__(self, user, scope):
-                        self.user = user
-                        self.scope = scope
-
-                def resolve(self):
-                        if self.user == 'admin':
-                                return scope.all()
-                        return scope.filter_by(author='staff')
 ```
-The `Scope` class for a model should always be an inner class of the corresponding Policy class. The constructor takes 2 arguments - the user (exactly like in the Policy class) and a `scope` which is the model you want to return a subset of.
 
-Instead of writing the constructor every time you need a scope you could also just inherit from `ApplicationPolicy.Scope`.
-
-When you call the `policy_scope(model)` with a model class (it doesn't make sense to pass an object here), the `resolve` method gets called.
+When you call the `policy_scope(model)` with a model class (it doesn't make sense to pass an object here), the `scope` method gets called.
 
 ``` python
 from app import pundit
