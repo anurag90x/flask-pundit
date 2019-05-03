@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 requirements = [
-    'Flask==0.10.1',
+    'Flask==1.0.2',
 ]
 
 setup(
