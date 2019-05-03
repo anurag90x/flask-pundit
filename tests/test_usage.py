@@ -219,7 +219,7 @@ class TestUsage(TestCase):
         assert_raises(RuntimeError, self.client.get,
                       '/test_policy_scope_admin')
 
-    def test_verify_authorized_or_policy_scope_decorator_success_with_authorize(self):
+    def test_verify_either_decorator_success_with_authorize(self):
         def do_authorize_stuff():
             post = Post(1)
             return self.pundit.authorize(post)
@@ -237,7 +237,7 @@ class TestUsage(TestCase):
         resp = self.client.get('/test_authorize_admin_get')
         eq_(resp.status_code, 400)
 
-    def test_verify_authorized_or_policy_scoped_decorator_success_with_scope(self):
+    def test_verify_either_decorator_success_with_scope(self):
         def do_policy_scope_stuff():
             return self.pundit.policy_scope(Post)
 
@@ -250,7 +250,7 @@ class TestUsage(TestCase):
         resp = self.client.get('/test_policy_scope_admin')
         eq_(resp.data.decode(), '{"posts": [1, 2]}')
 
-    def test_verify_authorized_or_policy_scoped_decorator_raises_exception(self):
+    def test_verify_either_decorator_raises_exception(self):
         def do_policy_scope_stuff():
             return self.pundit.policy_scope(Post)
 
