@@ -4,14 +4,23 @@ from functools import wraps
 from .helpers import dasherized_name
 
 
+def _authorized_not_called():
+    pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
+    stack_top = pundit._get_stack_top()
+    return not getattr(stack_top, 'authorize_called', False)
+
+
+def _policy_scoped_not_called():
+    pundit = getattr(flask.current_app, 'extensions', {}).get('flask_pundit')
+    stack_top = pundit._get_stack_top()
+    return not getattr(stack_top, 'policy_scope_called', False)
+
+
 def verify_authorized(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        pundit = getattr(flask.current_app, 'extensions', {})\
-            .get('flask_pundit')
-        stack_top = pundit._get_stack_top()
         response = func(*args, **kwargs)
-        if not getattr(stack_top, 'authorize_called', False):
+        if _authorized_not_called():
             raise RuntimeError('''
             Failed to call authorize method
             but used verification decorator''')
@@ -22,14 +31,23 @@ def verify_authorized(func):
 def verify_policy_scoped(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        pundit = getattr(flask.current_app, 'extensions', {})\
-            .get('flask_pundit')
-        stack_top = pundit._get_stack_top()
         response = func(*args, **kwargs)
-        if not getattr(stack_top, 'policy_scope_called', False):
+        if _policy_scoped_not_called():
             raise RuntimeError('''
             Failed to call policy_scope method
             but used verification decorator''')
+        return response
+    return inner
+
+
+def verify_authorized_or_policy_scoped(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        response = func(*args, **kwargs)
+        if _authorized_not_called() and _policy_scoped_not_called():
+            raise RuntimeError('''
+                    Failed to call either policy_scope or authorized method
+                    but used verification decorator''')
         return response
     return inner
 

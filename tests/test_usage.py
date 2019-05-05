@@ -2,7 +2,9 @@ from flask import g, Flask
 from flask_pundit import (
     FlaskPundit,
     verify_authorized,
-    verify_policy_scoped)
+    verify_policy_scoped,
+    verify_authorized_or_policy_scoped
+)
 from .models.post import Post
 from .models.comment import Comment
 from nose.tools import (
@@ -211,6 +213,49 @@ class TestUsage(TestCase):
 
         @self.app.route('/test_policy_scope_admin')
         @verify_policy_scoped
+        def admin_get_post():
+            g.user = {'id': 1, 'role': 'admin'}
+            return json.dumps({'posts': []})
+        assert_raises(RuntimeError, self.client.get,
+                      '/test_policy_scope_admin')
+
+    def test_verify_either_decorator_success_with_authorize(self):
+        def do_authorize_stuff():
+            post = Post(1)
+            return self.pundit.authorize(post)
+
+        @self.app.route('/test_authorize_admin_get')
+        @verify_authorized_or_policy_scoped
+        def admin_get_post():
+            g.user = {'id': 1, 'role': 'admin'}
+            raise BadRequest()
+            is_authorized = do_authorize_stuff()
+            if is_authorized:
+                return 'Success', 200
+            else:
+                return 'Forbidden', 403
+        resp = self.client.get('/test_authorize_admin_get')
+        eq_(resp.status_code, 400)
+
+    def test_verify_either_decorator_success_with_scope(self):
+        def do_policy_scope_stuff():
+            return self.pundit.policy_scope(Post)
+
+        @self.app.route('/test_policy_scope_admin')
+        @verify_authorized_or_policy_scoped
+        def admin_get_post():
+            g.user = {'id': 1, 'role': 'admin'}
+            scoped_posts = do_policy_scope_stuff()
+            return json.dumps({'posts': scoped_posts})
+        resp = self.client.get('/test_policy_scope_admin')
+        eq_(resp.data.decode(), '{"posts": [1, 2]}')
+
+    def test_verify_either_decorator_raises_exception(self):
+        def do_policy_scope_stuff():
+            return self.pundit.policy_scope(Post)
+
+        @self.app.route('/test_policy_scope_admin')
+        @verify_authorized_or_policy_scoped
         def admin_get_post():
             g.user = {'id': 1, 'role': 'admin'}
             return json.dumps({'posts': []})
