@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 
 requirements = [
-    'Flask==0.10.1',
+    'Flask==1.0.2',
 ]
 
 setup(
     name='flask-pundit',
-    version='1.1.0',
+    version='1.2.0',
     license='MIT',
     url='https://github.com/anurag90x/flask-pundit',
     author='Anurag Chaudhury',
@@ -24,6 +24,7 @@ setup(
         'Framework :: Flask',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
         'License :: OSI Approved :: MIT License'
     ]
 )

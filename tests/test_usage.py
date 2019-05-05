@@ -3,8 +3,8 @@ from flask_pundit import (
     FlaskPundit,
     verify_authorized,
     verify_policy_scoped)
-from models.post import Post
-from models.comment import Comment
+from .models.post import Post
+from .models.comment import Comment
 from nose.tools import (
     assert_raises,
     ok_,
@@ -164,7 +164,7 @@ class TestUsage(TestCase):
             ok_(self.pundit._verify_policy_scoped())
             return json.dumps({'posts': scoped_posts})
         resp = self.client.get('/test_policy_scope_admin')
-        eq_(resp.data, '{"posts": [1, 2]}')
+        eq_(resp.data.decode(), '{"posts": [1, 2]}')
 
     def test_policy_scoped_staff(self):
         def do_policy_scope_stuff():
@@ -177,7 +177,7 @@ class TestUsage(TestCase):
             ok_(self.pundit._verify_policy_scoped())
             return json.dumps({'posts': scoped_posts})
         resp = self.client.get('/test_policy_scope_staff')
-        eq_(resp.data, '{"posts": [3, 4]}')
+        eq_(resp.data.decode(), '{"posts": [3, 4]}')
 
     def test_policy_scope_with_policy_class_specified_for_admin(self):
         def do_policy_scope_stuff():
@@ -190,7 +190,7 @@ class TestUsage(TestCase):
             ok_(self.pundit._verify_policy_scoped())
             return json.dumps({'comments': scoped_comments})
         resp = self.client.get('/test_policy_scope_admin_get_comments')
-        eq_(resp.data, '{"comments": ["Hello"]}')
+        eq_(resp.data.decode(), '{"comments": ["Hello"]}')
 
     def test_verify_policy_scoped_decorator_success(self):
         def do_policy_scope_stuff():
@@ -203,7 +203,7 @@ class TestUsage(TestCase):
             scoped_posts = do_policy_scope_stuff()
             return json.dumps({'posts': scoped_posts})
         resp = self.client.get('/test_policy_scope_admin')
-        eq_(resp.data, '{"posts": [1, 2]}')
+        eq_(resp.data.decode(), '{"posts": [1, 2]}')
 
     def test_verify_policy_scoped_decorator_raises_exception(self):
         def do_policy_scope_stuff():
