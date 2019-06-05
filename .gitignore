@@ -1,3 +1,6 @@
+venv2/
+venv3/
+
 .DS_Store
 tags
 build
