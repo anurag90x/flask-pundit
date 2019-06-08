@@ -7,7 +7,7 @@ requirements = [
 
 setup(
     name='flask-pundit',
-    version='1.2.1',
+    version='1.2.2',
     license='MIT',
     url='https://github.com/anurag90x/flask-pundit',
     author='Anurag Chaudhury',
