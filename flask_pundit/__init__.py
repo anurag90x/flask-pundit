@@ -91,7 +91,7 @@ class FlaskPundit(object):
 
     def policy_scope(self, scope, user=None, *args, **kwargs):
         """ Call this method from within a resource or
-        a route to return a scoped version of a mdoel
+        a route to return a scoped version of a model
         For example, blog posts only viewable by the admin's staff.
         """
         current_user = user or self._get_current_user()
